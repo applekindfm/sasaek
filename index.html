@@ -357,19 +357,25 @@ $('btnSave').onclick=function(){
     }
   });
   if(err){ $('editErr').textContent=err; return; }
+  if(S.busy) return; S.busy=1; $('btnSave').disabled=true; $('btnSave').dataset.t=$('btnSave').textContent; $('btnSave').textContent='저장 중...';
   var payload=bs.map(function(b){ return {qty:b.qty,dateChange:b.dateChange,newDate:b.newDate,addrChange:b.addrChange,scope:b.scope,name:b.name,phone:b.phone,zip:b.zip,addr1:b.addr1,addr2:b.addr2}; });
+  var done=function(){ S.busy=0; $('btnSave').disabled=false; $('btnSave').textContent=$('btnSave').dataset.t; };
   call('apiSave',S.name,S.phone,S.senders,S.token,S.cur.id,payload).then(function(r){
+    done();
     if(!r.ok){ $('editErr').textContent=r.msg; return; }
     replaceItem(r.item); showDone(r.item,'변경이 완료되었습니다');
-  }).catch(function(){ $('editErr').textContent='오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'; });
+  }).catch(function(){ done(); $('editErr').textContent='오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'; });
 };
 $('btnRevert').onclick=function(){
   var b=$('btnRevert');
   if(!b.dataset.sure){ b.dataset.sure='1'; b.textContent='한 번 더 누르면 변경 신청이 취소됩니다'; b.style.borderColor='var(--red)'; b.style.color='var(--red)'; return; }
+  if(S.busy) return; S.busy=1; b.disabled=true;
+  var done=function(){ S.busy=0; b.disabled=false; };
   call('apiCancel',S.name,S.phone,S.senders,S.token,S.cur.id).then(function(r){
+    done();
     if(!r.ok){ $('editErr').textContent=r.msg; return; }
     replaceItem(r.item); showDone(r.item,'원래대로 받으시도록 변경되었습니다');
-  }).catch(function(){ $('editErr').textContent='오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'; });
+  }).catch(function(){ done(); $('editErr').textContent='오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'; });
 };
 $('btnBack').onclick=function(){ renderList(); show('vList'); };
 function replaceItem(item){ S.items=S.items.map(function(x){return x.id===item.id?item:x;}); }
