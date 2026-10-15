@@ -141,10 +141,12 @@ var API_URL = 'https://script.google.com/macros/s/AKfycbwDx9besSl4mxqEgk3H0NXKfu
       self[fn]=function(){
         var args=[].slice.call(arguments);
         var url=API_URL+'?api='+fn+'&d='+encodeURIComponent(JSON.stringify(args))+'&_='+Date.now();
-        fetch(url,{method:'GET',credentials:'omit',redirect:'follow',cache:'no-store'})
+        var fin=false, ac=window.AbortController?new AbortController():null;
+        var tm=setTimeout(function(){ if(fin) return; fin=true; if(ac) ac.abort(); self._fail&&self._fail(new Error('timeout')); },30000);
+        fetch(url,{method:'GET',credentials:'omit',redirect:'follow',cache:'no-store',signal:ac?ac.signal:undefined})
           .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-          .then(function(j){ self._ok&&self._ok(j); })
-          .catch(function(e){ self._fail&&self._fail(e); });
+          .then(function(j){ if(fin) return; fin=true; clearTimeout(tm); self._ok&&self._ok(j); })
+          .catch(function(e){ if(fin) return; fin=true; clearTimeout(tm); self._fail&&self._fail(e); });
       };
     });
   }
@@ -364,7 +366,7 @@ $('btnSave').onclick=function(){
     done();
     if(!r.ok){ $('editErr').textContent=r.msg; return; }
     replaceItem(r.item); showDone(r.item,'변경이 완료되었습니다');
-  }).catch(function(){ done(); $('editErr').textContent='오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'; });
+  }).catch(function(){ done(); $('editErr').textContent='저장되지 않았습니다. 다시 눌러 주세요.'; });
 };
 $('btnRevert').onclick=function(){
   var b=$('btnRevert');
@@ -375,7 +377,7 @@ $('btnRevert').onclick=function(){
     done();
     if(!r.ok){ $('editErr').textContent=r.msg; return; }
     replaceItem(r.item); showDone(r.item,'원래대로 받으시도록 변경되었습니다');
-  }).catch(function(){ done(); $('editErr').textContent='오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'; });
+  }).catch(function(){ done(); $('editErr').textContent='취소되지 않았습니다. 다시 눌러 주세요.'; });
 };
 $('btnBack').onclick=function(){ renderList(); show('vList'); };
 function replaceItem(item){ S.items=S.items.map(function(x){return x.id===item.id?item:x;}); }
