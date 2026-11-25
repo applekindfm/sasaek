@@ -274,7 +274,7 @@ function renderList(){
 function newBlock(qty){ return {qty:qty, dateChange:false, newDate:S.cfg.altDates[0]||'', addrChange:false, scope:'이번 차수만', name:'', phone:'', zip:'', addr1:'', addr2:''}; }
 function openEdit(id){
   var it=S.items.filter(function(x){return x.id===id;})[0]; S.cur=it;
-  S.blocks = (it.changes&&it.changes.length) ? it.changes.map(function(c){ return Object.assign(newBlock(c.qty),c); }) : [newBlock(it.qty)];
+  S.blocks = (it.changes&&it.changes.length) ? it.changes.map(function(c){ var nb=Object.assign(newBlock(c.qty),c); if(!nb.newDate) nb.newDate=S.cfg.altDates[0]||''; return nb; }) : [newBlock(it.qty)];
   $('editHead').innerHTML='<h3>'+esc(it.product)+' × '+it.qty+'박스</h3><dl class="kv"><dt>받는 분</dt><dd>'+esc(it.recipient)+' ('+esc(it.phone)+')</dd><dt>주소</dt><dd>'+esc(it.addr)+'</dd><dt>출고일</dt><dd>'+dLabel(S.cfg.baseDate)+'</dd></dl>'
     + (it.qty>1?'<div class="note" style="margin-top:8px">일부 박스만 바꾸시려면 아래에서 박스 수를 줄여 주세요. 나머지 박스는 원래대로 출고됩니다.</div>':'');
   $('btnRevert').classList.toggle('hide',!(it.changes&&it.changes.length));
@@ -352,6 +352,7 @@ $('btnSave').onclick=function(){
   bs.forEach(function(b,i){
     var tag=bs.length>1?'[변경 '+(i+1)+'] ':'';
     if(!b.dateChange&&!b.addrChange) err=err||tag+'출고일 변경 또는 주소 변경을 선택해 주세요.';
+    if(b.dateChange&&!b.newDate&&S.cfg.altDates.length===1) b.newDate=S.cfg.altDates[0];
     if(b.dateChange&&!b.newDate) err=err||tag+'출고일을 선택해 주세요.';
     if(b.addrChange){
       if(!b.name.trim()) err=err||tag+'받는 분 성함을 입력해 주세요.';
